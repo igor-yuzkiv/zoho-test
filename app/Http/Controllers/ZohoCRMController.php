@@ -33,7 +33,6 @@ class ZohoCRMController extends Controller
     public function index(ZohoCRMClient $zohoCRMClient)
     {
         return redirect($this->zohoCRMClient->generateGrandCodeUrl());
-
     }
 
     /**
@@ -51,10 +50,10 @@ class ZohoCRMController extends Controller
         dd($this->zohoCRMClient->createDeal(
             [
                 [
-                    'Deal_Name' => 'Test value453',
+                    'Deal_Name' => 'Test Deal',
                     'Stage' => 'Qualification',
                 ]
-            ]
+            ], 'Task for Test Deal'
         ));
     }
 
@@ -67,7 +66,7 @@ class ZohoCRMController extends Controller
             ->setClientId('1000.435G177Z1Y88YNGXICNN4O93DGNKJL')
             ->setClientSecret('9c26ad89509e73eaacd2d7d7fa30f877e674a9a4c1')
             ->setRedirectUri('http://test-laravel.igor-yuzkiv.website/create-deal-self-client')
-            ->setGrandCode('1000.1e279d90226c9971510e30c18a16542b.3b97f3ea00809293e19cb7129892a7d0');
+            ->setGrandCode('1000.ce51702714f8a03aadd9f724b1e1e454.46a83d30452195145ecd125510ddde3f');
 
         dd($this->zohoCRMClient->createDeal(
             [

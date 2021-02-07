@@ -32,8 +32,6 @@ class ZohoCRMClient
 
     /**
      * @var string
-     *
-     * https://accounts.zoho.com/oauth/v2/auth?scope=ZohoCRM.modules.ALL&client_id=1000.CCIVG6SSHA23ME0SA5A9XI0JXHDFBU&response_type=code&access_type=online&redirect_uri=http://test-laravel.igor-yuzkiv.website/redirect-page
      */
     private $grandCode = null;
 
@@ -79,38 +77,11 @@ class ZohoCRMClient
     public function setRedirectUri(string $redirectUri): self
     {
         $this->redirectUri = $redirectUri;
-        return  $this;
-    }
-
-    /**
-     * @param array $items
-     * @return array
-     * @throws GuzzleException
-     */
-    public function createDeal(array $items)
-    {
-        $this->setToken();
-
-        $client = new Client([
-            'defaults' => [
-                'headers' => ['Authorization' => 'Zoho-oauthtoken ' . $this->token]
-            ]
-        ]);
-
-        $request = $client->post('https://www.zohoapis.com/crm/v2/Deals', [
-            RequestOptions::HEADERS => ['Authorization' => 'Zoho-oauthtoken ' . $this->token, 'Content-Type' => 'application/json',],
-            RequestOptions::JSON => [
-                'data' => $items
-            ]
-        ]);
-
-        return [$request->getStatusCode(), $request->getBody()->getContents()];
+        return $this;
     }
 
     /**
      * @throws GuzzleException
-     *
-     * "{"access_token":"1000.68c54210b26eb16934a1190373f973c7.756167d4eff814645a804fcd52622d6e","api_domain":"https://www.zohoapis.com","token_type":"Bearer","expires_in":3600}
      */
     private function setToken()
     {
@@ -128,18 +99,79 @@ class ZohoCRMClient
         $response = json_decode($request->getBody()->getContents(), true);
         if (isset($response['access_token'])) {
             $this->token = $response['access_token'];
-        }else {
+        } else {
             throw new \Exception('invalid code');
         }
     }
 
     /**
+     * @param array $item
+     * @param string|null $taskSubject
+     * @return string
+     * @throws GuzzleException
+     */
+    public function createDeal(array $item, string $taskSubject = null)
+    {
+        $this->setToken();
+
+        $client = new Client([
+            'defaults' => [
+                'headers' => ['Authorization' => 'Zoho-oauthtoken ' . $this->token]
+            ]
+        ]);
+
+        $request = $client->post('https://www.zohoapis.com/crm/v2/Deals', [
+            RequestOptions::HEADERS => ['Authorization' => 'Zoho-oauthtoken ' . $this->token, 'Content-Type' => 'application/json',],
+            RequestOptions::JSON => [
+                'data' => $item
+            ]
+        ]);
+
+        if ($taskSubject != null && $request->getStatusCode() === 201) {
+            $dealData = json_decode($request->getBody()->getContents(), true);
+            $this->createTaskForDeal($taskSubject, $dealData);
+        }
+
+        return ($request->getStatusCode() == 201) ? 'Success' : 'Error';
+    }
+
+    /**
+     * @param string $subject
+     * @param array $dealData
+     * @throws GuzzleException
+     */
+    public function createTaskForDeal(string $subject, array $dealData)
+    {
+        $client = new Client([
+            'defaults' => [
+                'headers' => ['Authorization' => 'Zoho-oauthtoken ' . $this->token]
+            ]
+        ]);
+
+        $request = $client->post('https://www.zohoapis.com/crm/v2/Tasks', [
+            RequestOptions::HEADERS => ['Authorization' => 'Zoho-oauthtoken ' . $this->token, 'Content-Type' => 'application/json',],
+            RequestOptions::JSON => [
+                'data' => [
+                    [
+                        'Subject' => $subject,
+                        'What_Id' => $dealData['data'][0]['details']['id'],
+                        '$se_module' => 'Deals'
+                    ]
+                ]
+            ]
+        ]);
+
+        return $request->getStatusCode();
+    }
+
+    /**
+     * @param string $scope
      * @return string
      */
-    public function generateGrandCodeUrl()
+    public function generateGrandCodeUrl($scope = 'ZohoCRM.modules.ALL')
     {
         $query = [
-            'scope' => 'ZohoCRM.modules.ALL',
+            'scope' => $scope,
             'client_id' => $this->clientId,
             'response_type' => 'code',
             'access_type' => 'online',
