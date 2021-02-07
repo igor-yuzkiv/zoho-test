@@ -15,5 +15,6 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', [ZohoCRMController::class, 'index']);
-Route::get('redirect-page', [ZohoCRMController::class, 'redirect_page']);
+Route::get('create-deal', [ZohoCRMController::class, 'create_deal']);
+Route::get('create-deal-self-client', [ZohoCRMController::class, 'create_deal_self_client']);
 

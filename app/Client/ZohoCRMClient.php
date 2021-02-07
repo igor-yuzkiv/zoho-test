@@ -28,7 +28,7 @@ class ZohoCRMClient
     /**
      * @var string
      */
-    private $redirectUri = 'http://test-laravel.igor-yuzkiv.website/redirect-page';
+    private $redirectUri = 'http://test-laravel.igor-yuzkiv.website/create-deal';
 
     /**
      * @var string
@@ -44,17 +44,50 @@ class ZohoCRMClient
 
     /**
      * @param string $grandCode
+     * @return $this
      */
-    public function setGrandCode(string $grandCode): void
+    public function setGrandCode(string $grandCode): self
     {
         $this->grandCode = $grandCode;
+        return $this;
     }
 
     /**
+     * @param string $clientId
+     * @return $this
+     */
+    public function setClientId(string $clientId): self
+    {
+        $this->clientId = $clientId;
+        return $this;
+    }
+
+    /**
+     * @param string $clientSecret
+     * @return $this
+     */
+    public function setClientSecret(string $clientSecret): self
+    {
+        $this->clientSecret = $clientSecret;
+        return $this;
+    }
+
+    /**
+     * @param string $redirectUri
+     * @return $this
+     */
+    public function setRedirectUri(string $redirectUri): self
+    {
+        $this->redirectUri = $redirectUri;
+        return  $this;
+    }
+
+    /**
+     * @param array $items
      * @return array
      * @throws GuzzleException
      */
-    public function createDeal()
+    public function createDeal(array $items)
     {
         $this->setToken();
 
@@ -67,12 +100,7 @@ class ZohoCRMClient
         $request = $client->post('https://www.zohoapis.com/crm/v2/Deals', [
             RequestOptions::HEADERS => ['Authorization' => 'Zoho-oauthtoken ' . $this->token, 'Content-Type' => 'application/json',],
             RequestOptions::JSON => [
-                'data' => [
-                    [
-                        'Deal_Name' => 'Test value2',
-                        'Stage' => 'Qualification',
-                    ]
-                ]
+                'data' => $items
             ]
         ]);
 
@@ -98,7 +126,11 @@ class ZohoCRMClient
         ]);
 
         $response = json_decode($request->getBody()->getContents(), true);
-        $this->token = $response['access_token'];
+        if (isset($response['access_token'])) {
+            $this->token = $response['access_token'];
+        }else {
+            throw new \Exception('invalid code');
+        }
     }
 
     /**
